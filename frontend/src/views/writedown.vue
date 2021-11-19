@@ -9,9 +9,9 @@
         </div>
         <br />
       <div>
-        <a-range-picker v-model="date" v-on:change="sth = $event.target.date" :format="dateFormat" /></div>
+        <a-range-picker v-on:change="onChange" :format="dateFormat" /></div>
         <br />
-        <button class="download-button" @click="Download(sth)">
+        <button class="download-button" @click="Download()">
           Download CSV File
         </button>
       </div>
@@ -22,31 +22,30 @@
 <script>
 import Header from "@/components/Header.vue";
 import Sidebar from "@/components/Sidebar.vue";
-// import axios from "axios";
+import axios from "axios";
 export default {
   name: "WriteDown",
   components: { Header, Sidebar },
   data() {
     return {
       dateFormat: "DD/MM/YYYY",
-      date: null,
+      submittime: null,
     };
   },
   methods: {
-    // onChange(date, dateString) {
-    //   console.log(dateString);
-    // },
-    Download(sth) {
-      console.log(sth);
-    //   let data = {
-    //     startTime: this.time3[0],
-    //     endTime: this.time3[1],
-    //   };
-    //   axios
-    //     .post(`http://127.0.0.1:8000/writedown/`, data)
-    //     .then((response) => console.log(response.data));
-    // },
-  },
+    onChange(date, dateString) {
+      this.submittime=dateString;
+    },
+    Download() {
+      console.log(this.submittime);
+      let data = {
+        startTime: this.submittime[0],
+        endTime: this.submittime[1],
+      };
+      axios
+        .post(`http://127.0.0.1:8000/writedown/`, data)
+        .then((response) => console.log(response.data));
+    },
   },
 };
 </script>

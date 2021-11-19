@@ -1,31 +1,39 @@
 from django.shortcuts import render
-from django.db import connection
-from django.shortcuts import render
 from django.http import HttpResponse
-from rest_framework.response import Response
+from django.db import connection
 from backend import settings
+from django.http import StreamingHttpResponse
+from django.http import JsonResponse
 from rest_framework.views import APIView
+from rest_framework import status
 import os
+import csv
 import pandas as pd
-# # Create your views here.
 
 
-def WriteDown(APIView):
-    cur = connection.cursor()
-    cur.execute('''
-select top 10 tti_num_type_tiers_tti, 
-tir_num_tiers, 
-pay_code_pays_pay,
-org_num_organisation_eln,
-niv_num_niveau_eln,eln_num_elt_niveau_eln
-from ods.mds_tiers_ref tr
-where tr.tti_num_type_tiers_tti in (21)
-and pay_code_pays_pay = 'CN'
-and niv_num_niveau_eln in (0,4)
-group by 1,2,3,4,5,6
-order by 1 desc
-''')
-    header = ['Type', 'third', 'Country', 'DPP', 'Level', 'DeptNum']
-    df = pd.DataFrame(cur.fetchall(), columns=header)
-    print(df)
-    return HttpResponse(df)
+# Create your views here.
+
+
+class WriteDown(APIView):
+    def post(self, request):
+        cursor = connection.cursor()
+        startTime = request.data.get("startTime")
+        endTime = request.data.get("endTime")
+        cursor.execute('''
+                    select * from dvdbredshift02.ods_retail.cis_writedown wd
+                     where wd.store in (
+                       select t.tir_num_tiers from dvdbredshift02.ods.mds_tiers_ref t
+                       where t.tti_num_type_tiers_tti=7
+                       and t.pay_code_pays_pay='CN'
+                       and t.dev_code_devise_dev='CNY'
+                    ) and wd.creationdate > to_date('%s', 'dd/mm/yyyy') --by month
+                    and wd.creationdate < to_date('%s', 'dd/mm/yyyy')
+                     and wd.type != 'CLAIM_BURGLARY'
+                     '''% (startTime, endTime))
+        rows = cursor.fetchall()
+        download_file_path = os.path.join(settings.BASE_DIR,"test.csv")
+        df=pd.DataFrame(rows)
+        df.to_csv(download_file_path)
+        return HttpResponse(rows)
+
+

@@ -18,6 +18,7 @@ from django.urls import path
 from WriteDown import views
 
 urlpatterns = [
-    path('writedown/', views.WriteDown),
-    path('admin/', admin.site.urls),
-]
+    path('writedown/', views.WriteDown.as_view()),
+    # path('writedown/', views.WriteDown),
+    ]
+
